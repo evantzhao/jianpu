@@ -29,7 +29,7 @@ export function stats(state,now=Date.now()){
 export function recommendation(state,now=Date.now()){
  const all=stats(state,now),weak=Object.values(all).filter(s=>s.attempts&&(!s.mastered||s.dueNow)).sort((a,b)=>Number(b.dueNow)-Number(a.dueNow)||a.score-b.score||a.last-b.last);
  const next=lessons.find(l=>!state.completed.includes(l.id));
- if(weak.length)return {type:'review',concept:weak[0].id,lesson:lessons.find(l=>l.concepts.includes(weak[0].id)).id,reason:weak[0].dueNow?'已到复习时间':weak[0].assisted?'有提示时能认出，再独立试一次':'这个概念还需要巩固'};
+ if(weak.length)return {type:'review',concept:weak[0].id,lesson:lessons.find(l=>l.concepts.includes(weak[0].id)).id,reason:weak[0].dueNow?'已到复习时间':weak[0].assisted?'曾使用提示，试着独立辨认':'这个概念还需要巩固'};
  return {type:'lesson',lesson:next?.id||'context',reason:next?'循序学习，再用短练习巩固':'基础已走过，试试连读短句'};
 }
 export function shuffle(arr,rng=Math.random){const out=[...arr];for(let i=out.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[out[i],out[j]]=[out[j],out[i]];}return out;}
