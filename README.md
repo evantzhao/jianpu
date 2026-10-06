@@ -27,7 +27,19 @@ npm start     # serve dist/
 
 The app uses ES modules and hash navigation. `vercel.json` builds and serves `dist/` with a restrictive Content Security Policy. No environment variables are needed. Vercel should link to `evantzhao/jianpu`, production branch `main`, repository root, framework Other.
 
-Optional UI verification: install Playwright and Chromium, then run `node scripts/verify-browser.cjs`. `BROWSER_EXECUTABLE` may select a local Chrome executable. The script exercises the lesson → answer → persistence flow, hint tracking, notes, backup/import, dictionary, phrase reveal, and mobile overflow checks. Screenshots are written to `/tmp/guqin-qa`. Some sandbox environments prohibit browser sockets; run the script in a browser-capable environment in that case.
+Browser verification (development dependency only):
+
+```sh
+npm ci
+npx playwright install --with-deps chromium webkit
+npm run build
+npm run test:browser
+BROWSER_ENGINE=webkit npm run test:browser
+```
+
+Pull requests run both engines in GitHub Actions. Checks exercise touch navigation, lesson → answer → persistence, hint tracking, notes, backup/import, dictionary, phrase reveal, and responsive layouts from 320–1440px. Screenshots are uploaded as workflow artifacts and also written locally to `/tmp/guqin-qa/<engine>`. Browser emulation does not replace testing on a physical iPhone. `BROWSER_EXECUTABLE` optionally selects a locally installed browser. If the environment cannot launch browser processes, use the PR checks.
+
+Phone layouts stack reading cards and answer choices, use larger touch targets and input text, and reserve space for the bottom navigation and safe areas. The explorer includes a direct dictionary-search shortcut; phrase notation scrolls horizontally so glyphs remain legible.
 
 ## Learning model
 
