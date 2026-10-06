@@ -150,9 +150,11 @@ const base = 'http://localhost:3002';
     assert.equal(await page.getByRole('dialog').evaluate(el => el.getBoundingClientRect().height <= innerHeight), true);
     await page.getByLabel('关闭', {exact: true}).tap();
     // Language is presentation-only: preserve canonical question values and local progress.
+    const translationGaps = new Set();
     const translated = async label => {
       const gaps = await page.evaluate(async () => (await import('/src/i18n.js')).localize(document.body, {reportMissing: true}));
-      assert.deepEqual(gaps, [], `Translation coverage: ${label}`);
+      if (gaps.length) console.error(`Translation gaps (${label}):`, gaps);
+      gaps.forEach(gap => translationGaps.add(gap));
     };
     await page.setViewportSize({width: 390, height: 844});
     await go('learn/structure');
@@ -258,6 +260,7 @@ const base = 'http://localhost:3002';
     assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('guqin-reader.v1')).notes), draft);
     await page.locator('#import-file').setInputFiles({name: 'invalid.json', mimeType: 'application/json', buffer: Buffer.from('{"version":99}')});
     assert.match(await page.locator('#notice').innerText(), /not a valid Guqin Reader backup/);
+    assert.deepEqual([...translationGaps], [], 'No missing English UI translations');
     assert.deepEqual(errors, [], 'No browser errors');
     console.log(`PASS ${engine}: touch dictionary, lesson → hint → answer → reload, notes, backup/import, all phrase selections/reveal, ${routes.length * 6} responsive routes, 15 examples, 44px targets and landscape dialog. English: all lesson steps, 76-question content coverage in unit tests, 56 responsive routes, all examples/phrases, modal/import text, language persistence and switching without lost answers or notes.`);
   } catch (error) {
