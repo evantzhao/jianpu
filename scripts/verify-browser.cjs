@@ -25,7 +25,12 @@ const base = 'http://localhost:3002';
   const noOverflow = async label => {
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, label);
   };
-  const screenshot = name => page.screenshot({path: `${output}/${name}.png`, fullPage: true});
+  const screenshot = async name => {
+    await page.locator('.toast.visible').waitFor({state: 'hidden'});
+    // Start full-page captures at the top so offscreen fixed UI is not stitched into the page.
+    await page.evaluate(() => window.scrollTo({top: 0, behavior: 'instant'}));
+    await page.screenshot({path: `${output}/${name}.png`, fullPage: true});
+  };
   try {
     fs.mkdirSync(output, {recursive: true});
     await new Promise((resolve, reject) => {

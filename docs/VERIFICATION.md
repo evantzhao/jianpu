@@ -1,3 +1,31 @@
+# Mobile PR verification — 2026-10-06
+
+[PR #1](https://github.com/evantzhao/jianpu/pull/1) changes phone and portrait-tablet layouts. Production remains on `main` until the owner merges the PR.
+
+## Passed in GitHub Actions
+
+Both Chromium and WebKit passed against the built static app in [run 37408492052](https://github.com/evantzhao/jianpu/actions/runs/37408492052), commit `62b99d09f9c15ac3208b119e8b8d25203c149a68`:
+
+- Nine learning/content tests and static build.
+- 84 route/width combinations per engine: all six lessons and all main routes at 320, 390, 430, 768, 1024 and 1440px, without page-level horizontal overflow.
+- Phone touch flow: direct dictionary search → pinyin lookup → term dialog; search input uses 16px text.
+- Lesson → hint → answer → stored progress → reload, plus note saving.
+- Browser download/export → import/merge, preserving notes without duplicate attempts.
+- All 15 example selections; primary phone navigation, filters and anatomy controls meet 44×44px targets.
+- All phrase selections remain visible as Next moves through the horizontally scrolling strip; self-test and reveal work.
+- A landscape phone dialog fits the viewport.
+- No application console or page errors.
+
+Workflow artifacts contain desktop and phone screenshots and a synthetic test backup. Chromium screenshots were visually inspected for notation rendering, layout, dictionary, lessons, practice and phrases. CI is configured to repeat on each PR update; consult the latest check for its exact commit.
+
+## Preview and remaining limits
+
+The branch Vercel deployment reached `READY`. Its live preview requires Vercel sign-in. The automatic approval review rejected creating a temporary share link because that would expand access; no preview access settings were changed. Visual verification used the same built source in CI instead of claiming a signed-in live-preview check.
+
+These are emulated browser checks, not a physical iPhone/Safari test. Actual keyboard behavior, device safe-area insets and VoiceOver remain manual checks. Progress remains local to each browser/origin; preview progress does not sync to production.
+
+---
+
 # Verification — 2026-10-04
 
 ## Passed
