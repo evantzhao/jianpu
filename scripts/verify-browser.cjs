@@ -66,7 +66,7 @@ const base = 'http://localhost:3002';
     await page.getByLabel('搜索指法').fill('');
 
     await go('learn/structure');
-    await page.locator('[data-action="step"][data-value="2"]').tap();
+    await page.locator('.step-tabs [data-action="step"][data-value="2"]').tap();
     await page.locator('[data-action="finish-lesson"]').tap();
     await page.locator('[data-action="hint"]').tap();
     await page.locator('[data-action="answer"]').first().tap();
@@ -149,8 +149,120 @@ const base = 'http://localhost:3002';
     await page.locator('[data-action="term"][data-value="nao"]').tap();
     assert.equal(await page.getByRole('dialog').evaluate(el => el.getBoundingClientRect().height <= innerHeight), true);
     await page.getByLabel('关闭', {exact: true}).tap();
+    // Language is presentation-only: preserve canonical question values and local progress.
+    const translationGaps = new Set();
+    const translated = async label => {
+      const gaps = await page.evaluate(async () => (await import('/src/i18n.js')).localize(document.body, {reportMissing: true}));
+      if (gaps.length) console.error(`Translation gaps (${label}):`, gaps);
+      gaps.forEach(gap => translationGaps.add(gap));
+    };
+    await page.setViewportSize({width: 390, height: 844});
+    await go('learn/structure');
+    await page.locator('.step-tabs [data-action="step"][data-value="1"]').tap();
+    await page.getByRole('button', {name: '切换到英文'}).tap();
+    assert.equal(await page.locator('html').getAttribute('lang'), 'en');
+    assert.match(await page.locator('.lesson-copy h2').innerText(), /Take this symbol apart/);
+    await translated('lesson step after toggle');
+    await page.getByRole('button', {name: 'Switch to Chinese'}).tap();
+    assert.match(await page.locator('.lesson-copy h2').innerText(), /拆开这个谱字/);
+    await page.getByRole('button', {name: '切换到英文'}).tap();
+    await page.reload();
+    assert.equal(await page.locator('html').getAttribute('lang'), 'en');
+    assert.equal(await page.evaluate(() => localStorage.getItem('guqin-reader.language')), 'en');
+
+    await go('practice');
+    await page.locator('[data-action="start"]').tap();
+    const optionValues = await page.locator('[data-action="answer"]').evaluateAll(els => els.map(el => el.dataset.value));
+    const glyphBefore = await page.locator('.question-glyphs').textContent();
+    await page.locator('[data-action="hint"]').tap();
+    await page.getByRole('button', {name: 'Switch to Chinese'}).tap();
+    await page.getByRole('button', {name: '切换到英文'}).tap();
+    assert.deepEqual(await page.locator('[data-action="answer"]').evaluateAll(els => els.map(el => el.dataset.value)), optionValues);
+    assert.equal(await page.locator('.question-glyphs').textContent(), glyphBefore);
+    assert.match(await page.locator('.hint-row').innerText(), /Hint used/);
+    const attemptsBefore = await page.evaluate(() => JSON.parse(localStorage.getItem('guqin-reader.v1')).attempts.length);
+    await page.locator('[data-action="answer"]').first().tap();
+    const feedbackBefore = await page.locator('.feedback').innerText();
+    await page.getByRole('button', {name: 'Switch to Chinese'}).tap();
+    await page.getByRole('button', {name: '切换到英文'}).tap();
+    assert.equal(await page.locator('.feedback').innerText(), feedbackBefore);
+    assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('guqin-reader.v1')).attempts.length), attemptsBefore + 1);
+    await translated('answered question');
+    await screenshot('english-practice');
+
+    await go('progress');
+    const draft = '猱 — ask my teacher. Not saved yet.';
+    await page.locator('#teacher-notes').fill(draft);
+    await page.getByRole('button', {name: 'Switch to Chinese'}).tap();
+    await page.getByRole('button', {name: '切换到英文'}).tap();
+    assert.equal(await page.locator('#teacher-notes').inputValue(), draft);
+    await page.getByRole('button', {name: 'Save notes', exact: true}).tap();
+    assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('guqin-reader.v1')).notes), draft);
+    await translated('progress with personal notes');
+
+    for (const width of [320, 390, 768, 1440]) {
+      await page.setViewportSize({width, height: 844});
+      for (const hash of routes) {
+        await go(hash);
+        await noOverflow(`English ${hash} at ${width}px`);
+        await translated(hash);
+      }
+    }
+    await page.setViewportSize({width: 390, height: 844});
+    for (const lesson of lessons) {
+      await go(`learn/${lesson.id}`);
+      for (const step of [0, 1, 2]) {
+        await page.locator(`.step-tabs [data-action="step"][data-value="${step}"]`).tap();
+        await translated(`${lesson.id} step ${step}`);
+      }
+    }
+    await go('explore');
+    await page.getByRole('button', {name: 'Find a technique ↓'}).tap();
+    await page.getByLabel('Search techniques').fill('broader');
+    await page.locator('[data-action="term"][data-value="nao"]').tap();
+    assert.match(await page.getByRole('dialog').innerText(), /broader, rhythmic oscillation/);
+    assert.match(await page.getByRole('dialog').innerText(), /猱/);
+    await page.getByRole('button', {name: 'Bookmark', exact: true}).tap();
+    await page.getByRole('button', {name: 'Remove bookmark', exact: true}).waitFor();
+    await translated('dictionary dialog and bookmark');
+    await screenshot('english-dictionary');
+    await page.getByLabel('Close', {exact: true}).tap();
+    await page.getByLabel('Search techniques').fill('');
+    for (let i = 0; i < examples.length; i++) {
+      await page.getByLabel('Choose a symbol').selectOption(String(i));
+      for (const part of ['left', 'hui', 'right', 'string']) {
+        await page.locator(`[data-action="part"][data-value="${part}"]`).tap();
+        await translated(`example ${i}, ${part}`);
+      }
+    }
+    await go('home'); await screenshot('english-home');
+    await go('learn/structure'); await screenshot('english-lesson');
+    await go('phrases');
+    if (await page.getByRole('button', {name: 'Self-test mode', exact: true}).isVisible()) await page.getByRole('button', {name: 'Self-test mode', exact: true}).tap();
+    for (let phrase = 0; phrase < phrases.length; phrase++) {
+      await page.locator(`[data-action="phrase"][data-value="${phrase}"]`).tap();
+      for (let note = 0; note < phrases[phrase].notes.length; note++) {
+        await page.locator('[data-action="phrase-reveal"]').tap();
+        await translated(`phrase ${phrase}, note ${note}`);
+        await page.locator('.phrase-controls .primary').tap();
+      }
+    }
+    await page.locator('[data-action="phrase-reveal"]').tap();
+    await screenshot('english-phrases');
+    await go('settings');
+    const englishDownload = page.waitForEvent('download');
+    await page.getByRole('button', {name: 'Export progress', exact: true}).tap();
+    await (await englishDownload).saveAs(`${output}/english-backup.json`);
+    await page.locator('#import-file').setInputFiles(`${output}/english-backup.json`);
+    await translated('import dialog');
+    await page.getByRole('button', {name: 'Merge records', exact: true}).tap();
+    assert.equal(await page.locator('html').getAttribute('lang'), 'en');
+    assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('guqin-reader.v1')).notes), draft);
+    await page.locator('#import-file').setInputFiles({name: 'invalid.json', mimeType: 'application/json', buffer: Buffer.from('{"version":99}')});
+    assert.match(await page.locator('#notice').innerText(), /not a valid Guqin Reader backup/);
+    assert.deepEqual([...translationGaps], [], 'No missing English UI translations');
     assert.deepEqual(errors, [], 'No browser errors');
-    console.log(`PASS ${engine}: touch dictionary, lesson → hint → answer → reload, notes, backup/import, all phrase selections/reveal, ${routes.length * 6} responsive routes, 15 examples, 44px targets and landscape dialog.`);
+    console.log(`PASS ${engine}: touch dictionary, lesson → hint → answer → reload, notes, backup/import, all phrase selections/reveal, ${routes.length * 6} responsive routes, 15 examples, 44px targets and landscape dialog. English: all lesson steps, 76-question content coverage in unit tests, 56 responsive routes, all examples/phrases, modal/import text, language persistence and switching without lost answers or notes.`);
   } catch (error) {
     if (page && !page.isClosed()) await screenshot('failure').catch(() => {});
     throw error;
