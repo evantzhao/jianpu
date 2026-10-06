@@ -227,7 +227,7 @@ export function translate(text, locale = language) {
   return result === undefined ? text : text.replace(value, result);
 }
 const originalText = new WeakMap(), originalAttributes = new WeakMap();
-const preserved = '.glyph, textarea, script, style, [translate="no"], .term-char, .term-dialog h2, .hero-caption h2, .explorer-plain, .phrase-note small';
+const preserved = '.glyph, textarea, script, style, [translate="no"], .term-char, .hero-caption h2, .explorer-plain, .phrase-note small';
 export function localize(root, {reportMissing = false} = {}) {
   const missing = [];
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);

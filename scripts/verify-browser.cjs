@@ -66,7 +66,7 @@ const base = 'http://localhost:3002';
     await page.getByLabel('搜索指法').fill('');
 
     await go('learn/structure');
-    await page.locator('[data-action="step"][data-value="2"]').tap();
+    await page.locator('.step-tabs [data-action="step"][data-value="2"]').tap();
     await page.locator('[data-action="finish-lesson"]').tap();
     await page.locator('[data-action="hint"]').tap();
     await page.locator('[data-action="answer"]').first().tap();
@@ -156,7 +156,7 @@ const base = 'http://localhost:3002';
     };
     await page.setViewportSize({width: 390, height: 844});
     await go('learn/structure');
-    await page.locator('[data-action="step"][data-value="1"]').tap();
+    await page.locator('.step-tabs [data-action="step"][data-value="1"]').tap();
     await page.getByRole('button', {name: '切换到英文'}).tap();
     assert.equal(await page.locator('html').getAttribute('lang'), 'en');
     assert.match(await page.locator('.lesson-copy h2').innerText(), /Take this symbol apart/);
@@ -210,7 +210,7 @@ const base = 'http://localhost:3002';
     for (const lesson of lessons) {
       await go(`learn/${lesson.id}`);
       for (const step of [0, 1, 2]) {
-        await page.locator(`[data-action="step"][data-value="${step}"]`).tap();
+        await page.locator(`.step-tabs [data-action="step"][data-value="${step}"]`).tap();
         await translated(`${lesson.id} step ${step}`);
       }
     }
