@@ -259,6 +259,7 @@ const base = 'http://localhost:3002';
     assert.equal(await page.locator('html').getAttribute('lang'), 'en');
     assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('guqin-reader.v1')).notes), draft);
     await page.locator('#import-file').setInputFiles({name: 'invalid.json', mimeType: 'application/json', buffer: Buffer.from('{"version":99}')});
+    await page.locator('#notice').filter({hasText: 'not a valid Guqin Reader backup'}).waitFor();
     assert.match(await page.locator('#notice').innerText(), /not a valid Guqin Reader backup/);
     assert.deepEqual([...translationGaps], [], 'No missing English UI translations');
     assert.deepEqual(errors, [], 'No browser errors');
