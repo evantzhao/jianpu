@@ -1,8 +1,10 @@
 # 琴读 · Guqin Reader
 
-Chinese-first guqin **减字谱 / jianzipu** reading practice for a learner already taking lessons. This teaches guqin tablature, not numbered jianpu notation.
+Chinese/English guqin **减字谱 / jianzipu** reading practice for a learner already taking lessons. This teaches guqin tablature, not numbered jianpu notation.
 
 ## Features
+
+- A persistent 中文 / English toggle translates navigation, all six lessons, all 76 questions, feedback, dictionary definitions, phrase explanations and settings. Chinese notation remains visible.
 
 - Six source-linked lessons: composite structure, right-hand techniques, string/hui numerals, open/stopped/harmonic tones, movement symbols, and phrase context.
 - 15 composite notation examples, component explanations, and a guqin position diagram.
@@ -40,6 +42,12 @@ BROWSER_ENGINE=webkit npm run test:browser
 Pull requests run both engines in GitHub Actions. Checks exercise touch navigation, lesson → answer → persistence, hint tracking, notes, backup/import, dictionary, phrase reveal, and responsive layouts from 320–1440px. Screenshots are uploaded as workflow artifacts and also written locally to `/tmp/guqin-qa/<engine>`. Browser emulation does not replace testing on a physical iPhone. `BROWSER_EXECUTABLE` optionally selects a locally installed browser. If the environment cannot launch browser processes, use the PR checks.
 
 Phone layouts stack reading cards and answer choices, use larger touch targets and input text, and reserve space for the bottom navigation and safe areas. The explorer includes a direct dictionary-search shortcut; phrase notation scrolls horizontally so glyphs remain legible.
+
+## Languages
+
+Chinese remains the default. Use the language button in the header or Settings to switch at any time. The device preference is stored separately under `guqin-reader.language`; it is not part of progress backups. Existing v1 backups continue to work. Switching keeps the current lesson step, question, answer order, hint/feedback state and unsaved lesson notes. Both languages use the same question IDs and answer values.
+
+`src/content.en.js` contains English teaching copy keyed by curriculum IDs; `src/i18n.js` contains interface copy and numeric formatting. The presentation layer translates text and accessible labels, never notation encodings, answer values, search input or personal notes. Chinese study characters are intentionally retained. Dictionary search accepts Chinese, pinyin and English definitions. Translation coverage tests check the complete curriculum; browser checks exercise both languages and switching.
 
 ## Learning model
 
